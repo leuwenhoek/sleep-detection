@@ -1,0 +1,10 @@
+.venv/
+*.log
+.DS_Store
+Thumbs.db
+face.py
+test.py
+ignore
+saved_thresholds.json
+session_summary.html
+state_history.json

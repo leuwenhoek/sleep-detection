@@ -19,7 +19,7 @@ mp_drawing = mp.solutions.drawing_utils
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
 # Constants for detection
-DEFAULT_EAR_THRESHOLD = 0.25  # Keep default threshold constant
+DEFAULT_EAR_THRESHOLD = 0.23  # Keep default threshold constant
 CONSEC_FRAMES = 16
 ALEART = True
 MICROSLEEP_FRAMES = 30  # Frames indicating microsleep
