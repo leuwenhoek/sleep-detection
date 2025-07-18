@@ -973,7 +973,7 @@ def main():
         # Session summary
         session_duration = time.time() - session_start_time
         final_blink_rate = calculate_blink_rate()
-        recommendation = "Take a break and rest if possible." if sleep_percentage > 50 or microsleep_counter > 0 else "Continue monitoring if driving or performing critical tasks."
+        recommendation = "Take a break and rest if possible." if sleep_percentage > 50 or microsleep_counter >= 10 else "Continue monitoring if driving or performing critical tasks."
         
         print_with_counter("=== Session Summary ===")
         print_with_counter(f"Duration: {session_duration/60:.1f} minutes")
