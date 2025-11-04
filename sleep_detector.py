@@ -39,7 +39,10 @@ input_text = ""
 input_counter = 0  # For cursor blinking
 
 # Variables for saving thresholds
-save_thresholds_file = "saved_thresholds.json"
+
+if not os.path.exists(os.path.join("JSON","saved_thresholds.json")):
+    os.mkdir("JSON")
+save_thresholds_file = os.path.join("JSON","saved_thresholds.json")
 saved_thresholds = []
 recently_used = []  # List to track recently used thresholds
 MAX_RECENT = 5  # Maximum number of recently used thresholds to track
@@ -137,7 +140,7 @@ def save_thresholds_to_file():
 def save_state_history():
     """Save state history to JSON file"""
     try:
-        with open("state_history.json", "w") as f:
+        with open(os.path.join("JSON","state_history.json"), "w") as f:
             json.dump(state_history, f, indent=2, default=str)
         print_with_counter("Saved state history to file")
     except Exception as e:
