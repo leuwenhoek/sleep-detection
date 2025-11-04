@@ -24,6 +24,47 @@ CONSEC_FRAMES = 16
 ALEART = True
 MICROSLEEP_FRAMES = 30  # Frames indicating microsleep
 
+JSON_DIR = "JSON"
+os.makedirs(JSON_DIR, exist_ok=True)
+JSON_FILE_PATH = os.path.join(JSON_DIR, "sleep_detection_data.json")
+
+# Vehicle (driver) info for this detector instance
+VEHICLE_INFO = {
+    "id": "driver1",
+    "name": "Ayush",
+    "type": "car"
+}
+
+def write_vehicle_status(state: str):
+    """Write a single-vehicle entry to the shared JSON file."""
+    entry = {
+        "id": VEHICLE_INFO["id"],
+        "name": VEHICLE_INFO["name"],
+        "type": VEHICLE_INFO["type"],
+        "status": state,                     # exact string shown on screen
+        "last_update": datetime.now().isoformat()
+    }
+
+    # Load existing data (if any) → always keep a list
+    if os.path.exists(JSON_FILE_PATH):
+        try:
+            with open(JSON_FILE_PATH, "r") as f:
+                data = json.load(f)
+            if not isinstance(data, list):
+                data = []
+        except json.JSONDecodeError:
+            data = []
+    else:
+        data = []
+
+    # Replace entry for this driver (or append if missing)
+    data = [d for d in data if d.get("id") != VEHICLE_INFO["id"]]
+    data.append(entry)
+
+    # Write back
+    with open(JSON_FILE_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+
 # Variables for tracking state
 sleep = drowsy = active = 0
 status = ""
@@ -653,6 +694,11 @@ def calculate_blink_rate():
     return blink_frequency
 
 def main():
+
+    if not os.path.exists(JSON_FILE_PATH):
+        with open(JSON_FILE_PATH, "w") as f:
+            json.dump([], f)
+
     # Load saved thresholds
     load_thresholds()
     
@@ -898,44 +944,47 @@ def main():
                         drowsy = active = 0
                         if sleep > CONSEC_FRAMES:
                             status = "SLEEPING !!!"
-                            color = (0, 0, 255)  # Red text
-                            box_color = (0, 0, 255)  # Red box
+                            color = (0, 0, 255)
+                            box_color = (0, 0, 255)
                             threading.Thread(target=play_ALEART).start()
                     elif current_threshold <= ear < current_threshold + 0.04:
                         drowsy += 1
                         sleep = active = 0
                         if drowsy > CONSEC_FRAMES:
                             status = "Drowsy !"
-                            color = (255, 0, 255)  # Magenta text
-                            box_color = (255, 0, 255)  # Magenta box
+                            color = (255, 0, 255)
+                            box_color = (255, 0, 255)
                     else:
                         active += 1
                         sleep = drowsy = 0
                         if active > CONSEC_FRAMES:
                             status = "Active :)"
-                            color = (0, 255, 0)  # Green text
-                            box_color = (0, 255, 0)  # Green box
-                    
-                    # ===== NEW: Update state history =====
+                            color = (0, 255, 0)
+                            box_color = (0, 255, 0)
+
+                    # ===== UPDATE STATE HISTORY ONLY ON CHANGE =====
                     if status and old_status != status:
                         print_with_counter(f"Status changed to: {status} (EAR: {ear:.2f})")
                         update_state_history(status)
-                    # ====================================
-                    
+
+                    # ===== ALWAYS WRITE CURRENT STATUS TO JSON =====
+                    write_vehicle_status(status)   # <--- THIS IS THE KEY LINE
+
                     # Update sleep percentage
                     update_sleep_percentage(status)
-                    
+
                     # Alert when sleepiness is high
                     if sleep_percentage > 50 and sleep_percentage % 10 < 0.1:
                         print_with_counter(f"WARNING: Sleepiness at {sleep_percentage:.1f}%!")
-                    
+
                     # Draw rectangle around face
                     cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), box_color, 2)
-                    
+
                     # Display status with background
                     text_size = cv2.getTextSize(status, cv2.FONT_HERSHEY_SIMPLEX, 1, 3)[0]
                     cv2.rectangle(frame, (10, 5), (text_size[0] + 20, 40), (255, 255, 255), -1)
                     cv2.putText(frame, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 3)
+                    
             else:
                 # Print message if no face is detected
                 cv2.putText(frame, "No face detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
