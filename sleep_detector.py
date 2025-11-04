@@ -985,7 +985,10 @@ def main():
         print_with_counter("=== Application terminated ===")
         
         # Save session summary to HTML file
-        with open("session_summary.html", "w") as f:
+        if not os.path.exists('session'):
+            os.mkdir('session')
+        session_summary = os.path.join('session','session_summary.html')
+        with open(session_summary, "w") as f:
             # Generate HTML table for state history
             state_table_html = ""
             if state_history:
