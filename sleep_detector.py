@@ -1006,6 +1006,7 @@ def main():
             # Quit on 'q'
             if key == ord('q'):
                 print_with_counter("Quitting application...")
+                write_vehicle_status("Not Running")
                 break
 
     finally:
