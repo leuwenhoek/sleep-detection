@@ -35,13 +35,14 @@ VEHICLE_INFO = {
     "type": "car"
 }
 
-def write_vehicle_status(state: str):
+def write_vehicle_status(state: str, percentage: float): # ADD 'percentage' argument
     """Write a single-vehicle entry to the shared JSON file."""
     entry = {
         "id": VEHICLE_INFO["id"],
         "name": VEHICLE_INFO["name"],
         "type": VEHICLE_INFO["type"],
         "status": state,                     # exact string shown on screen
+        "sleep_percentage": round(percentage, 1), # NEW: Add the calculated percentage (rounded to 1 decimal)
         "last_update": datetime.now().isoformat()
     }
 
@@ -81,8 +82,16 @@ input_counter = 0  # For cursor blinking
 
 # Variables for saving thresholds
 
+if not os.path.exists(os.path.join("JSON")):
+    os.mkdir("JSON")
+if not os.path.exists(os.path.join("JSON","saved_thresholds.json")):
+    with open(os.path.join('JSON','saved_thresholds.json'), "w") as f:
+        json.dump([],f,indent=4)
+
+
 if not os.path.exists(os.path.join("JSON","saved_thresholds.json")):
     os.mkdir("JSON")
+
 save_thresholds_file = os.path.join("JSON","saved_thresholds.json")
 saved_thresholds = []
 recently_used = []  # List to track recently used thresholds
@@ -967,12 +976,12 @@ def main():
                         print_with_counter(f"Status changed to: {status} (EAR: {ear:.2f})")
                         update_state_history(status)
 
-                    # ===== ALWAYS WRITE CURRENT STATUS TO JSON =====
-                    write_vehicle_status(status)   # <--- THIS IS THE KEY LINE
-
-                    # Update sleep percentage
-                    update_sleep_percentage(status)
-
+                    # 1. Update sleep percentage based on the new status
+                    update_sleep_percentage(status) # Ensure percentage is fresh
+                    
+                    # 2. Now write the current status AND the calculated percentage to JSON
+                    write_vehicle_status(status, sleep_percentage) # <--- UPDATED CALL
+                    
                     # Alert when sleepiness is high
                     if sleep_percentage > 50 and sleep_percentage % 10 < 0.1:
                         print_with_counter(f"WARNING: Sleepiness at {sleep_percentage:.1f}%!")
@@ -1006,7 +1015,7 @@ def main():
             # Quit on 'q'
             if key == ord('q'):
                 print_with_counter("Quitting application...")
-                write_vehicle_status("Not Running")
+                write_vehicle_status("Not running", sleep_percentage)
                 break
 
     finally:
